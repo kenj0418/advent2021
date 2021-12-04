@@ -91,7 +91,7 @@ const calculateBoardScore = (board, lastCall) => {
   return sumOfUnmarked * lastCall;
 }
 
-const run = () => {
+const run1 = () => {
   const data = readStringArrayFromFile("./input/day4.txt", "\n").filter((line) => { return line !== "" });
   const calls = data[0].split(",").map((call) => { return parseInt(call) });
   const boards = getBoards(data.slice(1));
@@ -113,6 +113,29 @@ const run = () => {
   // console.log(`winningBoard: ${JSON.stringify(winningBoard, null, 2)}`);
 
   const score = calculateBoardScore(winningBoard, calls[callNum]);
+  console.log(`Score: ${score}`);
+}
+
+const run = () => {
+  const data = readStringArrayFromFile("./input/day4.txt", "\n").filter((line) => { return line !== "" });
+  const calls = data[0].split(",").map((call) => { return parseInt(call) });
+  let boards = getBoards(data.slice(1));
+
+  let callNum = -1;
+  while (boards.length > 1) {
+    callNum++;
+    addCall(boards, calls[callNum]);
+    if (callNum >= 4) {
+      boards = boards.filter((board) => { return !isWinningBoard(board) });
+    }
+  }
+
+  while (!isWinningBoard(boards[0])) {
+    callNum++;
+    addCall(boards, calls[callNum]);
+  }
+
+  const score = calculateBoardScore(boards[0], calls[callNum]);
   console.log(`Score: ${score}`);
 }
 
