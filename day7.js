@@ -1,4 +1,4 @@
-const { readStringArrayFromFile, sum } = require("./lib");
+const { readStringArrayFromFile } = require("./lib");
 
 
 const calculateFuel1 = (crabs, pos) => {

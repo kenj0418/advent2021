@@ -1,3 +1,3 @@
-const day = require("./day7");
+const day = require("./day8");
 
 day.run();
