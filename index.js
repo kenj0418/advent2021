@@ -1,3 +1,3 @@
-const day = require("./day12");
+const day = require("./day13");
 
 day.run();
