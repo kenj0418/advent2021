@@ -4,10 +4,12 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "date; node ./index.js; date;",
+    "start": "date; node ./index.js --stack-size 2G; date;",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
   "license": "ISC",
-  "dependencies": {}
+  "dependencies": {
+    "node-dijkstra": "^2.5.0"
+  }
 }
