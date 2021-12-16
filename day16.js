@@ -11,11 +11,11 @@ const bitsToNumber = (bits, desc) => {
     num += bit;
   });
 
-  if (bits.length <= 40) {
-    console.log(`${desc}: ${bitsToString(bits)} = ${num}`);
-  } else {
-    console.log(`${desc}: ${bits.length} bits = ${num}`);
-  }
+  // if (bits.length <= 40) {
+  //   console.log(`${desc}: ${bitsToString(bits)} = ${num}`);
+  // } else {
+  //   console.log(`${desc}: ${bits.length} bits = ${num}`);
+  // }
   return num;
 }
 
@@ -51,7 +51,7 @@ const readOperatorPacketByLength = (trans, packets, version, packetType) => {
 }
 
 const readOperatorPacketByPacket = (trans, packets, version, packetType) => {
-  const packetCount = readBits(trans, 11, "packetCount", true);
+  const packetCount = readBits(trans, 11, "packetCount");
 
   const operands = [];
   for (let i = 0; i < packetCount; i++) {
@@ -152,6 +152,76 @@ const calculateVersionSum = (packets) => {
   return runningSum;
 }
 
+const evaluteSum = (packets) => {
+  let runningSum = 0
+  packets.forEach((packet) => {
+    runningSum += evaluatePacket(packet);
+  });
+  return runningSum;
+}
+
+const evaluteProduct = (packets) => {
+  let runningProduct = 1
+  packets.forEach((packet) => {
+    runningProduct *= evaluatePacket(packet);
+  });
+  return runningProduct;
+}
+
+const evaluteMinimum = (packets) => {
+  let minimum = evaluatePacket(packets[0]);
+
+  packets.forEach((packet) => {
+    const currValue = evaluatePacket(packet);
+    if (currValue < minimum) {
+      minimum = currValue;
+    }
+  });
+  return minimum;
+}
+
+const evaluteMaximum = (packets) => {
+  let maximum = evaluatePacket(packets[0]);
+
+  packets.forEach((packet) => {
+    const currValue = evaluatePacket(packet);
+    if (currValue > maximum) {
+      maximum = currValue;
+    }
+  });
+  return maximum;
+}
+
+const evaluteConditional = (packets, condition) => {
+  const op1 = evaluatePacket(packets[0]);
+  const op2 = evaluatePacket(packets[1]);
+
+  return condition(op1, op2) ? 1 : 0;
+}
+
+const evaluatePacket = (packet) => {
+  switch (packet.packetType) {
+    case 0: // sum
+      return evaluteSum(packet.operands);
+    case 1: // product
+      return evaluteProduct(packet.operands);
+    case 2: // minimum
+      return evaluteMinimum(packet.operands);
+    case 3: // maximum
+      return evaluteMaximum(packet.operands);
+    case 4: // value
+      return packet.value;
+    case 5: // greater than
+      return evaluteConditional(packet.operands, (op1, op2) => { return op1 > op2 });
+    case 6: // less than
+      return evaluteConditional(packet.operands, (op1, op2) => { return op1 < op2 });
+    case 7: // equal to
+      return evaluteConditional(packet.operands, (op1, op2) => { return op1 == op2 });
+    default:
+      throw new Error(`Unknown packet type; ${packet.packetType}`);
+  }
+}
+
 const run = () => {
   const data = readStringArrayFromFile("./input/day16.txt", "\n");
   const bits = dataToBits(data[0]);
@@ -161,6 +231,9 @@ const run = () => {
 
   const sumOfVersions = calculateVersionSum(trans.packets);
   console.log(`sumOfVersions: ${sumOfVersions}`);
+
+  const result = evaluatePacket(trans.packets[0]);
+  console.log(`result: ${result}`);
 };
 
 module.exports = { run };
