@@ -310,9 +310,9 @@ const combineSnailNums = (snums) => {
       snum.parent = newNode;
       temp = newNode;
       checkValidNode(temp);
-      debug(temp, "Before Reduce");
+      // debug(temp, "Before Reduce");
       reduce(temp);
-      debug(temp, "Reduced");
+      // debug(temp, "Reduced");
       checkValidNode(temp);
       // throw new Error("TEMP STOP");
     }
@@ -361,7 +361,7 @@ const getMagnitude = (snum) => {
   }
 }
 
-const run = () => {
+const run1 = () => {
   const data = readStringArrayFromFile("./input/day18.txt", "\n").map(parseSnailNum);
   const combined = combineSnailNums(data);
   debug(combined, "Combined");
@@ -370,6 +370,28 @@ const run = () => {
   debug(combined, "Reduced");
 
   console.log(`magnitude: ${getMagnitude(combined)}`);
+};
+
+const run = () => {
+  const data = readStringArrayFromFile("./input/day18.txt", "\n");
+
+  let maxMagnitude = 0;
+  for (let i = 0; i < data.length; i++) {
+    for (let j = 0; j < data.length; j++) {
+      if (i !== j) {
+        const d1 = parseSnailNum(data[i]);
+        const d2 = parseSnailNum(data[j]);
+        const combined = combineSnailNums([d1, d2]);
+        reduce(combined);
+        const thisMagnitude = getMagnitude(combined);
+        if (thisMagnitude > maxMagnitude) {
+          maxMagnitude = thisMagnitude;
+        }
+      }
+    }
+  }
+
+  console.log(`maxMagnitude: ${maxMagnitude}`);
 };
 
 module.exports = { run };
