@@ -194,18 +194,18 @@ const split = (snum, depth) => {
   // debug(snum, `After split`);
   // console.log("");
 
-  // if split produces a pair that meets the explode criteria, that pair explodes before other splits occur.
-  if (depth >= 4) {
-    debug(snum, `Reducing, nested`);
-    explode(snum);
-  }
+  // // if split produces a pair that meets the explode criteria, that pair explodes before other splits occur.
+  // if (depth >= 4) {
+  //   debug(snum, `Reducing, nested`);
+  //   explode(snum);
+  // }
 }
 
 const isSimplePair = (snum) => {
   return snum && snum.left && snum.right && !snum.left.left && !snum.right.left;
 }
 
-const reduceOne = (snum, depth) => {
+const reduceOneExplode = (snum, depth) => {
   checkValidNode(snum);
   // console.log(`Reducing depth=${depth} : ${getString(snum)}`);
   if (depth >= 4 && isSimplePair(snum)) {
@@ -213,16 +213,33 @@ const reduceOne = (snum, depth) => {
     explode(snum); // If any pair is nested inside four pairs, the leftmost such pair explodes.
     // debug(snum, `After Explode`);
     return true;
-  } else if (snum.value >= 10) {
+  } else if (snum.left) {
+    if (reduceOneExplode(snum.left, depth + 1)) {
+      // console.log(`depth=${depth} : ${getString(snum)}`);
+      return true;
+    } else if (reduceOneExplode(snum.right, depth + 1)) {
+      // console.log(`depth=${depth} : ${getString(snum)}`);
+      return true;
+    } else {
+      // console.log(`depth=${depth} : ${getString(snum)}`);
+    }
+  }
+
+  return false;
+}
+const reduceOneSplit = (snum, depth) => {
+  checkValidNode(snum);
+  // console.log(`Reducing depth=${depth} : ${getString(snum)}`);
+  if (snum.value >= 10) {
     // debug(snum, `About to split because ${snum.value} >= 10`);
     split(snum, depth); // If any regular number is 10 or greater, the leftmost such regular number splits.
     // debug(snum, `After Split`);
     return true;
   } else if (snum.left) {
-    if (reduceOne(snum.left, depth + 1)) {
+    if (reduceOneSplit(snum.left, depth + 1)) {
       // console.log(`depth=${depth} : ${getString(snum)}`);
       return true;
-    } else if (reduceOne(snum.right, depth + 1)) {
+    } else if (reduceOneSplit(snum.right, depth + 1)) {
       // console.log(`depth=${depth} : ${getString(snum)}`);
       return true;
     } else {
@@ -235,9 +252,20 @@ const reduceOne = (snum, depth) => {
 
 const reduce = (snum) => {
   let round = 1;
-  while (reduceOne(snum, 0)) {
-    debug(snum, `Reducing, round ${round++}`);
-  };
+  let numReduced = 0;
+
+  do {
+    numReduced = 0;
+    while (reduceOneExplode(snum, 0)) {
+      numReduced++;
+      // debug(snum, `Reducing (E), round ${round++}`);
+    };
+
+    if (reduceOneSplit(snum, 0)) {
+      numReduced++;
+      // debug(snum, `Reducing (S), round ${round++}`);
+    }
+  } while (numReduced > 0);
 }
 
 /*
@@ -265,30 +293,6 @@ const parseSnailNum = (st, parent) => {
   return snum;
 }
 
-// const combineSnailNums = (snums) => {
-//   let temp = null;
-
-//   snums.forEach((snum) => {
-//     checkValidNode(snum);
-//     if (temp == null) {
-//       temp = snum
-//     } else {
-//       let newNode = {
-//         parent: temp.parent,
-//         left: temp,
-//         right: snum
-//       }
-//       temp.parent = newNode;
-//       snum.parent = newNode;
-//       temp = newNode;
-//       checkValidNode(temp);
-//     }
-//   })
-
-//   // debug(temp, "After combine")
-//   return temp;
-// }
-
 const combineSnailNums = (snums) => {
   let temp = null;
 
@@ -305,10 +309,11 @@ const combineSnailNums = (snums) => {
       temp.parent = newNode;
       snum.parent = newNode;
       temp = newNode;
-      // checkValidNode(temp);
-      // reduce(temp);
-      // checkValidNode(temp);
-      // debug(temp, "Reduced");
+      checkValidNode(temp);
+      debug(temp, "Before Reduce");
+      reduce(temp);
+      debug(temp, "Reduced");
+      checkValidNode(temp);
       // throw new Error("TEMP STOP");
     }
   })
@@ -358,9 +363,6 @@ const getMagnitude = (snum) => {
 
 const run = () => {
   const data = readStringArrayFromFile("./input/day18.txt", "\n").map(parseSnailNum);
-  const reducedData = data.map((snum) => {
-    reduce(snum);
-  });
   const combined = combineSnailNums(data);
   debug(combined, "Combined");
   console.log("");
@@ -369,7 +371,5 @@ const run = () => {
 
   console.log(`magnitude: ${getMagnitude(combined)}`);
 };
-
-// TODO The numbers aren't coming up right, there seems to be an issue with the exploding
 
 module.exports = { run };
