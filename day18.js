@@ -1,38 +1,5 @@
 const { readStringArrayFromFile } = require("./lib");
 
-const checkValidNode = (snum) => {
-  if (!snum) {
-    throw new Error("Node is empty");
-  } else if (snum.deleted) {
-    throw new Error("Node was deleted");
-  } else if (typeof snum === 'number') {
-    throw new Error("Node is a primitive number");
-  } else if (snum.left && !snum.right) {
-    throw new Error("Node has left but no right");
-  } else if (!snum.left && snum.right) {
-    throw new Error("Node has right but no left");
-  } else if (!snum.left && !snum.right && !(snum.value || snum.value == 0)) {
-    throw new Error("Node has no right, left, or value");
-  } else if ((snum.left || snum.right) && (snum.value || snum.value == 0)) {
-    throw new Error("Node has left and/or right AND value");
-  } else if (typeof snum.left === 'number') {
-    throw new Error("Node has left equal to a primitive number");
-  } else if (typeof snum.right === 'number') {
-    throw new Error("Node has right equal to a primitive number");
-  }
-
-  checkValidTree(snum);
-}
-
-const checkValidTree = (snum) => {
-  if (snum.left) {
-    checkValidNode(snum.left);
-  }
-  if (snum.right) {
-    checkValidNode(snum.right);
-  }
-}
-
 const getUnenclosedComma = (st) => {
   let openParens = 0;
   let foundPos = -1;
@@ -62,7 +29,6 @@ const getUnenclosedComma = (st) => {
 }
 
 const getRightMostNumber = (snum) => {
-  checkValidNode(snum);
   if (snum.left) {
     const rightValue = getRightMostNumber(snum.right);
     if (rightValue) {
@@ -80,7 +46,6 @@ const getRightMostNumber = (snum) => {
 }
 
 const getClosestLeftNumber = (snum) => {
-  checkValidNode(snum);
   // console.log(`getClosestLeftNumber: ${getString(snum)}`);
 
   if (!snum.parent) {
@@ -101,7 +66,6 @@ const getClosestLeftNumber = (snum) => {
 }
 
 const getLeftMostNumber = (snum) => {
-  checkValidNode(snum);
   if (snum.left) {
     const leftValue = getLeftMostNumber(snum.left);
     if (leftValue) {
@@ -119,8 +83,6 @@ const getLeftMostNumber = (snum) => {
 }
 
 const getClosestRightNumber = (snum) => {
-  checkValidNode(snum);
-
   if (!snum.parent) {
     return null;
   } else if (snum.parent.right == snum) {
@@ -140,65 +102,28 @@ const getClosestRightNumber = (snum) => {
 }
 
 const explode = (snum) => {
-  checkValidNode(snum);
-
-  // debug(snum, `Exploding: ${getString(snum)}`);
   const leftNumber = getClosestLeftNumber(snum);
   const rightNumber = getClosestRightNumber(snum);
 
   if (leftNumber) {
-    // console.log(`Adding ${snum.left.value} to ${getString(leftNumber)}`);
     leftNumber.value += snum.left.value;
-    // debug(snum, `Added ${snum.left.value} to ${getString(leftNumber)}`);
-    checkValidNode(leftNumber);
   }
 
   if (rightNumber) {
-    // console.log(`Adding ${snum.right.value} to ${getString(rightNumber)}`);
     rightNumber.value += snum.right.value;
-    // debug(snum, `Added ${snum.right.value} to ${getString(rightNumber)}`);
-    checkValidNode(rightNumber);
   }
 
-  // console.log(`snum.left was: ${getString(snum.left)}`);
   snum.left.deleted = true;
   snum.left = null;
-  // console.log(`snum.right was: ${getString(snum.right)}`);
   snum.right.deleted = true;
   snum.right = null;
   snum.value = 0;
-  // debug(snum, `Zeroed out exploded pair`);
-  checkValidNode(snum);
-
-  /*
-  To explode a pair, the pair's left value is added to the first regular number to the left
-  of the exploding pair (if any), and the pair's right value is added to the first regular
-  number to the right of the exploding pair (if any). Exploding pairs will always consist
-  of two regular numbers. Then, the entire exploding pair is replaced with the regular
-  number 0.
-  */
-
-  // debug(snum, `After explode`);
-  // console.log("");
-
-
 }
 
 const split = (snum, depth) => {
-  checkValidNode(snum);
-  // debug(snum, `Splitting: ${getString(snum)}`);
   snum.left = { parent: snum, value: Math.floor(snum.value / 2) };
   snum.right = { parent: snum, value: Math.ceil(snum.value / 2) };
   snum.value = null;
-  checkValidNode(snum);
-  // debug(snum, `After split`);
-  // console.log("");
-
-  // // if split produces a pair that meets the explode criteria, that pair explodes before other splits occur.
-  // if (depth >= 4) {
-  //   debug(snum, `Reducing, nested`);
-  //   explode(snum);
-  // }
 }
 
 const isSimplePair = (snum) => {
@@ -206,44 +131,30 @@ const isSimplePair = (snum) => {
 }
 
 const reduceOneExplode = (snum, depth) => {
-  checkValidNode(snum);
-  // console.log(`Reducing depth=${depth} : ${getString(snum)}`);
   if (depth >= 4 && isSimplePair(snum)) {
-    // debug(snum, `Before Explode`);
     explode(snum); // If any pair is nested inside four pairs, the leftmost such pair explodes.
-    // debug(snum, `After Explode`);
     return true;
   } else if (snum.left) {
     if (reduceOneExplode(snum.left, depth + 1)) {
-      // console.log(`depth=${depth} : ${getString(snum)}`);
       return true;
     } else if (reduceOneExplode(snum.right, depth + 1)) {
-      // console.log(`depth=${depth} : ${getString(snum)}`);
       return true;
     } else {
-      // console.log(`depth=${depth} : ${getString(snum)}`);
     }
   }
 
   return false;
 }
 const reduceOneSplit = (snum, depth) => {
-  checkValidNode(snum);
-  // console.log(`Reducing depth=${depth} : ${getString(snum)}`);
   if (snum.value >= 10) {
-    // debug(snum, `About to split because ${snum.value} >= 10`);
     split(snum, depth); // If any regular number is 10 or greater, the leftmost such regular number splits.
-    // debug(snum, `After Split`);
     return true;
   } else if (snum.left) {
     if (reduceOneSplit(snum.left, depth + 1)) {
-      // console.log(`depth=${depth} : ${getString(snum)}`);
       return true;
     } else if (reduceOneSplit(snum.right, depth + 1)) {
-      // console.log(`depth=${depth} : ${getString(snum)}`);
       return true;
     } else {
-      // console.log(`depth=${depth} : ${getString(snum)}`);
     }
   }
 
@@ -251,32 +162,23 @@ const reduceOneSplit = (snum, depth) => {
 }
 
 const reduce = (snum) => {
-  let round = 1;
   let numReduced = 0;
 
   do {
     numReduced = 0;
     while (reduceOneExplode(snum, 0)) {
       numReduced++;
-      // debug(snum, `Reducing (E), round ${round++}`);
     };
 
     if (reduceOneSplit(snum, 0)) {
       numReduced++;
-      // debug(snum, `Reducing (S), round ${round++}`);
     }
   } while (numReduced > 0);
 }
 
-/*
-
-[[[[4,0],[5,4]],[[7, 7],[6,0]]],[[8,[7,7]],[[7,9],[5,0]]]]
-[[[[4,0],[5,4]],[[7,7],[6,0]]],[[[6,6],[5,6]],[[6,0],[7,7]]]]
-*/
 const parseSnailNum = (st, parent) => {
   if (st.length == 1) {
     const valueNode = { parent, value: parseInt(st) };
-    checkValidNode(valueNode);
     return valueNode;
   }
 
@@ -289,7 +191,6 @@ const parseSnailNum = (st, parent) => {
   snum.left = parseSnailNum(st.slice(1, comma), snum)
   snum.right = parseSnailNum(st.slice(comma + 1, st.length - 1), snum)
   snum.parent = parent;
-  checkValidNode(snum);
   return snum;
 }
 
@@ -297,7 +198,6 @@ const combineSnailNums = (snums) => {
   let temp = null;
 
   snums.forEach((snum) => {
-    checkValidNode(snum);
     if (temp == null) {
       temp = snum
     } else {
@@ -309,51 +209,39 @@ const combineSnailNums = (snums) => {
       temp.parent = newNode;
       snum.parent = newNode;
       temp = newNode;
-      checkValidNode(temp);
-      // debug(temp, "Before Reduce");
       reduce(temp);
-      // debug(temp, "Reduced");
-      checkValidNode(temp);
-      // throw new Error("TEMP STOP");
     }
   })
 
-  // debug(temp, "After combine")
   return temp;
 }
 
-const getString = (snum, level) => {
-  if (!snum) {
-    return "EMPTY";
-  }
+// const getString = (snum, level) => {
+//   if (!snum) {
+//     return "EMPTY";
+//   }
 
-  if (snum.left) {
-    return `[${getString(snum.left)},${getString(snum.right)}]`;
-  } else if (snum.value || snum.value == 0) {
-    return `${snum.value}`;
-  } else {
-    return `BROKEN: @ level: ${level}, parent: ${snum.parent}, left: ${snum.left}, right: ${snum.right}, value: ${snum.value}, snum: ${JSON.stringify(snum)}`;
-  }
-}
+//   if (snum.left) {
+//     return `[${getString(snum.left)},${getString(snum.right)}]`;
+//   } else if (snum.value || snum.value == 0) {
+//     return `${snum.value}`;
+//   } else {
+//     return `BROKEN: @ level: ${level}, parent: ${snum.parent}, left: ${snum.left}, right: ${snum.right}, value: ${snum.value}, snum: ${JSON.stringify(snum)}`;
+//   }
+// }
 
-const debug = (node, desc) => {
-  let level = 0;
-  let curr = node;
-  while (curr.parent) {
-    level++;
-    curr = curr.parent;
-  }
+// const debug = (node, desc) => {
+//   let level = 0;
+//   let curr = node;
+//   while (curr.parent) {
+//     level++;
+//     curr = curr.parent;
+//   }
 
-  console.log(`${desc}: ${getString(curr, level)}`);
-}
+//   console.log(`${desc}: ${getString(curr, level)}`);
+// }
 
 const getMagnitude = (snum) => {
-  /*
-  To check whether it's the right answer, the snailfish teacher only checks the magnitude of the final sum.
-  The magnitude of a pair is 3 times the magnitude of its left element plus 2 times the magnitude of its
-  right element. The magnitude of a regular number is just that number.
-  */
-
   if (snum.left) {
     return 3 * getMagnitude(snum.left) + 2 * getMagnitude(snum.right);
   } else {
@@ -364,10 +252,7 @@ const getMagnitude = (snum) => {
 const run1 = () => {
   const data = readStringArrayFromFile("./input/day18.txt", "\n").map(parseSnailNum);
   const combined = combineSnailNums(data);
-  debug(combined, "Combined");
-  console.log("");
   reduce(combined);
-  debug(combined, "Reduced");
 
   console.log(`magnitude: ${getMagnitude(combined)}`);
 };
