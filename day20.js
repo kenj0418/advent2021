@@ -47,7 +47,7 @@ const enhanceImage = (code, image, tileToInfinity) => {
 }
 
 const expandImage = (image) => {
-  const expandSize = 10;
+  const expandSize = 100;
   const origHeight = image.length;
   const origWidth = image[0].length;
 
@@ -93,18 +93,18 @@ const countLit = (image) => {
   return count;
 }
 
-const debugImage = (image, desc) => {
-  let st = `** ${desc} **\n`
-  image.forEach((row) => {
-    row.forEach((bit) => {
-      st += bit ? "#" : ".";
-    })
-    st += "\n"
-  })
+// const debugImage = (image, desc) => {
+//   let st = `** ${desc} **\n`
+//   image.forEach((row) => {
+//     row.forEach((bit) => {
+//       st += bit ? "#" : ".";
+//     })
+//     st += "\n"
+//   })
 
-  st += "\n"
-  console.log(st);
-}
+//   st += "\n"
+//   console.log(st);
+// }
 
 const run = () => {
   const data = readStringArrayFromFile("./input/day20.txt", "\n");
@@ -122,21 +122,17 @@ const run = () => {
     }
   })
 
-  // debugImage(image, "initial");
   image = expandImage(image);
-  // debugImage(image, "first expand");
-  image = enhanceImage(enhanceCode, image, 0);
-  // debugImage(image, "first enhance");
-  // image = expandImage(image);
-  // debugImage(image, "second expand");
-  image = enhanceImage(enhanceCode, image, enhanceCode[0]);
-  // debugImage(image, "second enhance");
+
+  const firstValue = enhanceCode[0];
+  const lastValue = enhanceCode[enhanceCode.length - 1];
+  for (let i = 0; i < 50; i++) {
+    const tileToInfinity = (i % 2 == 0) ? lastValue : firstValue;
+    image = enhanceImage(enhanceCode, image, tileToInfinity);
+  }
 
   const numLit = countLit(image);
-
   console.log(`numLit: ${numLit}`);
 };
-
-// not 5560
 
 module.exports = { run };
